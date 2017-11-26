@@ -1,8 +1,6 @@
 package entities
 
 import (
-	"errors"
-
 	"github.com/pmlpml/sqlt"
 )
 
@@ -19,38 +17,48 @@ func (dao *userInfoDao) Save(u *UserInfo) error {
 
 var userInfoQueryAll = "SELECT * FROM userinfo"
 var userInfoQueryByID = "SELECT * FROM userinfo where uid = ?"
+var userInfoCount = "SELECT count(*) FROM userinfo"
 
-func userInfoMapper(row sqlt.RowScanner) (interface{}, error) {
-	u := UserInfo{}
-	err := row.Scan(&u.UID, &u.UserName, &u.DepartName, &u.CreateAt)
-	return u, err
+func getUserInfoMapper(ul *[]UserInfo) sqlt.RowMapperCallback {
+	return func(row sqlt.RowScanner) error {
+		u := UserInfo{}
+		err := row.Scan(&u.UID, &u.UserName, &u.DepartName, &u.CreateAt)
+		if err != nil {
+			return err
+		}
+		*ul = append(*ul, u)
+		return nil
+	}
+}
+
+func getUserInfoOnceMapper(u *UserInfo) sqlt.RowMapperCallback {
+	return func(row sqlt.RowScanner) error {
+		err := row.Scan(&u.UID, &u.UserName, &u.DepartName, &u.CreateAt)
+		return err
+	}
 }
 
 // FindAll .
 func (dao *userInfoDao) FindAll() ([]UserInfo, error) {
-	objs, err := dao.Select(userInfoQueryAll, userInfoMapper)
 	ulist := make([]UserInfo, 0, 0)
-	if objs == nil {
-		return ulist, err
-	}
-
-	for _, o := range objs {
-		u, err := o.(UserInfo)
-		if err {
-			return ulist, errors.New("sql: New type of Error message here")
-		}
-		ulist = append(ulist, u)
-	}
-
+	err := dao.Select(userInfoQueryAll, getUserInfoMapper(&ulist))
 	return ulist, err
 }
 
 // FindByID .
 func (dao *userInfoDao) FindByID(id int) (*UserInfo, error) {
-	o, err := dao.SelectOne(userInfoQueryByID, userInfoMapper, id)
-	u, err1 := o.(UserInfo)
-	if err1 {
-		return &u, errors.New("sql: New type of Error message here")
-	}
+	u := UserInfo{}
+	err := dao.SelectOne(userInfoQueryByID, getUserInfoOnceMapper(&u), id)
 	return &u, err
+}
+
+// Count .
+func (dao *userInfoDao) Count() (int, error) {
+	count := 0
+	f := func(row sqlt.RowScanner) error {
+		err := row.Scan(&count)
+		return err
+	}
+	err := dao.SelectOne(userInfoCount, f)
+	return count, err
 }

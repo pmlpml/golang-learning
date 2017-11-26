@@ -39,3 +39,11 @@ func (*UserInfoAtomicService) FindByID(id int) *UserInfo {
 	checkErr(err)
 	return u
 }
+
+// Count .
+func (*UserInfoAtomicService) Count() int {
+	dao := userInfoDao{sqlt.NewSQLTemplate(mydb)}
+	c, err := dao.Count()
+	checkErr(err)
+	return c
+}

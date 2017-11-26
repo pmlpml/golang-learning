@@ -28,7 +28,7 @@ func initRoutes(mx *mux.Router, formatter *render.Render) {
 	mx.HandleFunc("/hello/{id}", testHandler(formatter)).Methods("GET")
 	mx.HandleFunc("/service/userinfo", postUserInfoHandler(formatter)).Methods("POST")
 	mx.HandleFunc("/service/userinfo", getUserInfoHandler(formatter)).Methods("GET")
-
+	mx.HandleFunc("/service/usercount", getUserCountHandler(formatter)).Methods("GET")
 }
 
 func testHandler(formatter *render.Render) http.HandlerFunc {
